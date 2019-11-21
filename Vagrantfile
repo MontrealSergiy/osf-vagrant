@@ -106,8 +106,9 @@ Vagrant.configure("2") do |config|
     docker-compose up -d admin_assets
     sleep 20m
     docker-compose up -d mfr wb fakecas sharejs
-    sleep 20m
-    until docker-compose postgres exec psql -c "select 1" -U postgres> /dev/null 2>&1; do sleep 2m; echo "Waiting 2min for postgres"; done
+    sleep 10m
+    # might loop forewer ...
+    until [[ `docker-compose exec postgres psql -c 'select 1' -U postgres` == *1* ]] do sleep 2m; echo 'waiting'; done
     docker-compose run --rm web python -m scripts.populate_institutions -e test -a
     docker-compose run --rm web python manage.py populate_fake_providers
     docker-compose run --rm web python -m scripts.parse_citation_styles
