@@ -32,9 +32,6 @@ Vagrant.configure("2") do |config|
 
   config.vm.network "forwarded_port", guest: 41953, host: 41953
 
-
-
-
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
@@ -95,34 +92,22 @@ Vagrant.configure("2") do |config|
     # do manually
     echo fs.inotify.max_user_watches=131072 |  tee -a /etc/sysctl.conf
     sysctl -p   
-
     cp ./website/settings/local-dist.py ./website/settings/local.py
-
     cp ./api/base/settings/local-dist.py ./api/base/settings/local.py
     cp ./docker-compose-dist.override.yml ./docker-compose.override.yml
     cp ./tasks/local-dist.py ./tasks/local.py
-
-
-    # dockerd &
-    
     docker-compose up requirements mfr_requirements wb_requirements
     sleep 20m
     docker-compose up -d elasticsearch postgres mongo rabbitmq
     rm -Rf ../node_modules
-    
     sleep 10m
     docker-compose up -d assets
     sleep 25m
     docker-compose up -d admin_assets
     sleep 20m
-
-    
-
     docker-compose up -d mfr wb fakecas sharejs
     sleep 20m
-    
-
-    until docker-compose postgresql exec psql -c "select 1" -U postres> /dev/null 2>&1; do sleep 2m; echo "Waiting 2min for postgres"; done
+    until docker-compose postgres exec psql -c "select 1" -U postgres> /dev/null 2>&1; do sleep 2m; echo "Waiting 2min for postgres"; done
     docker-compose run --rm web python -m scripts.populate_institutions -e test -a
     docker-compose run --rm web python manage.py populate_fake_providers
     docker-compose run --rm web python -m scripts.parse_citation_styles
