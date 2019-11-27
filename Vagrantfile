@@ -78,8 +78,8 @@ Vagrant.configure("2") do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
  config.vm.provision "shell", inline: <<-SHELL
-    echo $SHELL
-    apt-get update && apt-get install -y git
+    apt-get update 
+    # apt-get install -y git
     git clone https://github.com/CenterForOpenScience/osf.io.git
     cd osf.io
     echo fs.inotify.max_user_watches=131072 |  tee -a /etc/sysctl.conf
@@ -89,20 +89,23 @@ Vagrant.configure("2") do |config|
     cp ./docker-compose-dist.override.yml ./docker-compose.override.yml
     cp ./tasks/local-dist.py ./tasks/local.py
     docker-compose up requirements mfr_requirements wb_requirements
-    sleep 20m
+    # sleep 15m
     docker-compose up -d elasticsearch postgres mongo rabbitmq
+    ifconfig lo:0 192.168.168.167 netmask 255.255.255.255 up
     rm -Rf ../node_modules
-    sleep 10m
+    # sleep 10m
     docker-compose up -d assets
-    sleep 25m
+    # sleep 25m
     docker-compose up -d admin_assets
-    sleep 20m
+    # sleep 20m
     docker-compose up -d mfr wb fakecas sharejs
-    sleep 15m
-    # until [[ `docker-compose exec postgres psql -c 'select 1' -U postgres` == *1* ]]; do sleep 2m; echo 'waiting'; done
+    # sleep 25m
+    docker-compose run --rm web python manage.py migrate
+    # sleep 10m
     docker-compose run --rm web python -m scripts.populate_institutions -e test -a
     docker-compose run --rm web python manage.py populate_fake_providers
     docker-compose run --rm web python -m scripts.parse_citation_styles
+    # sleep 30m
     docker-compose up -d worker web api admin preprints registries ember_osf_web 
   SHELL
 end
